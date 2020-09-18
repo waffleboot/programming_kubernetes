@@ -33,6 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(pod.GetObjectKind().GroupVersionKind().Empty())
 	fmt.Println(pod.Name)
 	fmt.Println(pod.Status.PodIP)
 }
