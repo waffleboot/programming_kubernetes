@@ -19,6 +19,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// config.AcceptContentTypes = "application/vnd.kubernetes.protobuf,application/json"
+	// config.ContentType = "application/vnd.kubernetes.protobuf"
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err)
