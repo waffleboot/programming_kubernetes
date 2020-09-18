@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	home "k8s.io/client-go/util/homedir"
+	wq "k8s.io/client-go/util/workqueue"
 )
 
 func main() {
@@ -30,17 +31,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	q := wq.New()
 	informerFactory := informers.NewFilteredSharedInformerFactory(clientset, 30*time.Second, "book", func(opts *metav1.ListOptions) {})
 	podInformer := informerFactory.Core().V1().Pods()
 	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			if pod, ok := newObj.(*v1.Pod); ok {
-				fmt.Println(pod.Name)
-			} else {
-				fmt.Println(newObj)
+				q.Add(pod.Name)
 			}
 		},
 	})
+	go func() {
+		for {
+			n, s := q.Get()
+			if s {
+				break
+			}
+			fmt.Println(n)
+			q.Done(n)
+		}
+	}()
 	informerFactory.Start(wait.NeverStop)
 	informerFactory.WaitForCacheSync(wait.NeverStop)
 	fmt.Println(clientset.Discovery().ServerVersion())
@@ -55,6 +65,5 @@ func main() {
 	fmt.Println(pod.GetObjectKind().GroupVersionKind().Empty())
 	fmt.Println(pod.Name)
 	fmt.Println(pod.Status.PodIP)
-	for {
-	}
+	select {}
 }
