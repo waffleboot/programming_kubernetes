@@ -25,6 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(clientset.Discovery().ServerVersion())
 	pods, err := clientset.CoreV1().Pods("book").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		panic(err)
