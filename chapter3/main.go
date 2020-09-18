@@ -8,10 +8,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	home "k8s.io/client-go/util/homedir"
 )
 
 func main() {
-	kubeconfig := flag.String("kubeconfig", "~/.kube/config", "kubeconfig file")
+	kubeconfig := flag.String("kubeconfig", fmt.Sprintf("%s/.kube/config", home.HomeDir()), "kubeconfig file")
 	flag.Parse()
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 	if err != nil {
