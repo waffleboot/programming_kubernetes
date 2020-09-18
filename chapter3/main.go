@@ -25,9 +25,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	pod, err := clientset.CoreV1().Pods("book").Get(context.Background(), "example", metav1.GetOptions{})
+	pods, err := clientset.CoreV1().Pods("book").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
+	pod, err := clientset.CoreV1().Pods("book").Get(context.Background(), pods.Items[0].Name, metav1.GetOptions{})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(pod.Name)
 	fmt.Println(pod.Status.PodIP)
 }
