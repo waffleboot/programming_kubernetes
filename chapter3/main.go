@@ -1,13 +1,16 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"path/filepath"
+	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	home "k8s.io/client-go/util/homedir"
 )
@@ -25,12 +28,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	informerFactory := informers.NewSharedInformerFactory(clientset, 30*time.Second)
+	podInformer := informerFactory.Core().V1().Pods()
+	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {},
+	})
+	informerFactory.Start(wait.NeverStop)
+	informerFactory.WaitForCacheSync(wait.NeverStop)
 	fmt.Println(clientset.Discovery().ServerVersion())
-	pods, err := clientset.CoreV1().Pods("book").List(context.Background(), metav1.ListOptions{})
+	pods, err := podInformer.Lister().Pods("book").List(labels.Everything())
 	if err != nil {
 		panic(err)
 	}
-	pod, err := clientset.CoreV1().Pods("book").Get(context.Background(), pods.Items[0].Name, metav1.GetOptions{})
+	pod := pods[0]
 	if err != nil {
 		panic(err)
 	}
