@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
@@ -28,10 +30,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	informerFactory := informers.NewSharedInformerFactory(clientset, 30*time.Second)
+	informerFactory := informers.NewFilteredSharedInformerFactory(clientset, 30*time.Second, "book", func(opts *metav1.ListOptions) {})
 	podInformer := informerFactory.Core().V1().Pods()
 	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			if pod, ok := newObj.(*v1.Pod); ok {
+				fmt.Println(pod.Name)
+			} else {
+				fmt.Println(newObj)
+			}
+		},
 	})
 	informerFactory.Start(wait.NeverStop)
 	informerFactory.WaitForCacheSync(wait.NeverStop)
@@ -47,4 +55,6 @@ func main() {
 	fmt.Println(pod.GetObjectKind().GroupVersionKind().Empty())
 	fmt.Println(pod.Name)
 	fmt.Println(pod.Status.PodIP)
+	for {
+	}
 }
